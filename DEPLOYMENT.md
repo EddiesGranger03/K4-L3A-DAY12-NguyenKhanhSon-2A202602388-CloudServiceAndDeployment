@@ -10,7 +10,7 @@
 |-----|----------|
 | Họ và tên | Nguyễn Khánh Sơn |
 | Mã học viên | 2A202602388 |
-| Repo hiện tại | [GitHub](https://github.com/EddiesGranger03/K4-L3A-DAY12-NguyenKhanhSon-2A202602388-Cloud-Service-And-Deployment) |
+| Repo hiện tại | [GitHub](https://github.com/EddiesGranger03/K4-L3A-DAY12-NguyenKhanhSon-2A202602388-CloudServicesAndDeployment) |
 
 ## Service
 
@@ -19,7 +19,7 @@
 | Public URL | https://day12-agent-mpaz.onrender.com |
 | Platform | Render |
 | Ngày kiểm tra | 28/09/2026 |
-| Trạng thái | `/health` 200, `/ready` 200, `/ask` không có key 401 |
+| Trạng thái | Dashboard `/` 200; `/health` 200; `/ready` 200; `/ask` không có key 401 |
 
 ## Cấu hình trên Render
 
@@ -61,20 +61,21 @@ có xác thực, điền khóa trong biến môi trường cục bộ `DEPLOY_AP
 Đã gọi trực tiếp Public URL ngày 28/09/2026:
 
 ```text
-GET  /       → HTTP 404 {"detail":"Not Found"}
+GET  /       → HTTP 200 (dashboard HTML)
 GET  /health → HTTP 200 {"status":"ok","service":"day12-agent","version":"1.0.0"}
 GET  /ready  → HTTP 200 {"status":"ready","redis":true}
 POST /ask    → HTTP 401 {"detail":"invalid or missing API key"}
 ```
 
 Lệnh POST gửi JSON `{"question":"Hello"}` và không gửi `X-API-Key`.
-Route `/` chưa được định nghĩa, nên HTTP 404 ở URL gốc là đúng với code hiện tại.
+Trước khi thêm dashboard, route `/` trả HTTP 404; bản hiện tại đã có giao diện.
 Request có xác thực chưa kiểm tra vì `DEPLOY_API_KEY` trên máy đang để trống;
 đây là phần kiểm tra bổ sung của CP5.
 
 ## Ảnh chụp màn hình
 
 - `screenshots/health.png`: ảnh phản hồi thật của `/health` trên Render.
-- `screenshots/dashboard.png`: chờ ảnh dashboard Render từ chủ tài khoản.
+- `screenshots/app-dashboard.png`: ảnh giao diện `/` chạy trên Render.
+- `screenshots/dashboard.png`: trang Render Deploys của `day12-agent`, trạng thái Live.
 
 Che mọi giá trị API key và mật khẩu Redis trước khi chụp dashboard.

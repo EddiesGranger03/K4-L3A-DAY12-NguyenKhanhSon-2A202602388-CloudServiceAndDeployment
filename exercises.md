@@ -162,5 +162,6 @@ tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
 > `{"detail":"Not Found"}`. Tôi kiểm tra lại các route trong `app/main.py` và
 > gọi `/health`: endpoint này trả HTTP 200, còn `/ready` trả HTTP 200 với
 > `redis: true`. Nguyên nhân là app chưa định nghĩa route `/`; đây là lỗi chọn
-> đường dẫn khi kiểm tra, không phải lỗi build hay kết nối Redis. Tôi sửa
-> bằng cách kiểm tra đúng URL `/health` và `/ready` thay vì chỉ mở URL gốc.
+> đường dẫn khi kiểm tra, không phải lỗi build hay kết nối Redis. Ban đầu
+> tôi kiểm tra đúng URL `/health` và `/ready`; sau đó tôi thêm route `/` để
+> hiện dashboard. URL gốc hiện trả HTTP 200.
