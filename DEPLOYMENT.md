@@ -74,5 +74,7 @@ Request có xác thực chưa kiểm tra vì `DEPLOY_API_KEY` trên máy đang �
 
 ## Ảnh chụp màn hình
 
-Lưu ảnh dashboard Render và kết quả gọi `/health` vào `screenshots/`, sau đó
-ghi tên file tại đây. Che mọi giá trị API key và mật khẩu Redis trước khi chụp.
+- `screenshots/health.png`: ảnh phản hồi thật của `/health` trên Render.
+- `screenshots/dashboard.png`: chờ ảnh dashboard Render từ chủ tài khoản.
+
+Che mọi giá trị API key và mật khẩu Redis trước khi chụp dashboard.
