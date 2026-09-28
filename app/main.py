@@ -15,9 +15,10 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from functools import lru_cache
+from pathlib import Path
 
 from fastapi import Depends, FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from utils.mock_llm import ask_llm
@@ -68,6 +69,12 @@ app = FastAPI(title="Day 12 Production Agent", version=SERVICE_VERSION, lifespan
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+
+
+@app.get("/", include_in_schema=False)
+def dashboard():
+    """Serve the browser dashboard without changing the API endpoints."""
+    return FileResponse(Path(__file__).with_name("dashboard.html"), media_type="text/html")
 
 
 # ─────────────────────────────────────────────────────────────

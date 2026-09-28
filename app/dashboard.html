@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236758e8'/%3E%3Cpath d='M32 9l6 17 17 6-17 6-6 17-6-17-17-6 17-6z' fill='white'/%3E%3C/svg%3E">
+  <title>Day 12 Agent · Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f7fb;
+      --surface: #ffffff;
+      --ink: #17213b;
+      --muted: #748099;
+      --border: #e6eaf2;
+      --purple: #6758e8;
+      --purple-pale: #eeecff;
+      --green: #12a77a;
+      --green-pale: #e5f8f1;
+      --red: #d65b65;
+      --shadow: 0 12px 36px rgba(23, 33, 59, .055);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--page); font: 15px/1.55 "Segoe UI", Inter, Arial, sans-serif; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    .shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar { background: #fff; border-right: 1px solid var(--border); padding: 32px 18px; display: flex; flex-direction: column; gap: 38px; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 12px; font-size: 16px; font-weight: 800; letter-spacing: -.025em; }
+    .brand-mark { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 12px; background: var(--purple); color: #fff; font-size: 20px; box-shadow: 0 8px 15px rgba(103, 88, 232, .23); }
+    .nav-label, .section-label { color: #a0a9bd; font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    .nav-label { padding: 0 13px; margin-bottom: 12px; }
+    .nav { display: grid; gap: 7px; }
+    .nav a { display: flex; align-items: center; gap: 12px; padding: 11px 13px; border-radius: 10px; color: #718099; font-size: 13px; font-weight: 650; }
+    .nav a.active { color: var(--purple); background: var(--purple-pale); }
+    .nav a:hover:not(.active) { background: #f6f7fb; color: var(--ink); }
+    .nav svg { width: 17px; height: 17px; stroke-width: 1.9; }
+    .sidebar-bottom { margin-top: auto; padding: 17px 14px; border: 1px solid var(--border); border-radius: 14px; background: #fafbfe; }
+    .sidebar-bottom strong { display: block; font-size: 12px; }
+    .sidebar-bottom p { margin: 5px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    main { width: min(1240px, 100%); padding: 28px clamp(22px, 4.1vw, 64px) 48px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 26px; }
+    .eyebrow { margin: 0 0 3px; color: var(--purple); font-size: 11px; letter-spacing: .11em; text-transform: uppercase; font-weight: 800; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 0; font-size: clamp(25px, 3vw, 32px); line-height: 1.2; letter-spacing: -.045em; }
+    h2 { margin-bottom: 0; font-size: 18px; letter-spacing: -.025em; }
+    .top-actions { display: flex; align-items: center; gap: 14px; }
+    .date { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .icon-button { border: 1px solid var(--border); background: #fff; color: #56647d; border-radius: 10px; width: 38px; height: 38px; display: grid; place-items: center; }
+    .icon-button:hover { color: var(--purple); border-color: #c9c3fb; }
+    .icon-button svg { width: 17px; height: 17px; }
+    .hero { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 28px; min-height: 216px; padding: 35px 40px; border-radius: 22px; background: linear-gradient(112deg, #222a5c 0%, #3c3a99 55%, #6556d8 100%); color: #fff; box-shadow: 0 20px 35px rgba(48, 45, 136, .14); }
+    .hero:before, .hero:after { content: ""; position: absolute; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; pointer-events: none; }
+    .hero:before { width: 440px; height: 440px; right: -88px; top: -160px; }
+    .hero:after { width: 290px; height: 290px; right: 60px; top: -78px; }
+    .hero-content, .hero-side { position: relative; z-index: 1; }
+    .hero-kicker { display: inline-flex; align-items: center; gap: 7px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; color: #c9c9ff; margin-bottom: 14px; }
+    .hero h2 { font-size: clamp(23px, 3vw, 33px); line-height: 1.18; letter-spacing: -.045em; max-width: 540px; }
+    .hero p { margin: 11px 0 0; color: #d9ddff; font-size: 13px; max-width: 510px; }
+    .hero-side { text-align: right; flex: 0 0 142px; }
+    .hero-side .pill { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.18); }
+    .hero-side small { display: block; color: #c4c8fc; margin-top: 12px; font-size: 11px; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; border-radius: 100px; padding: 7px 11px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+    .status-good { color: var(--green); background: var(--green-pale); }
+    .status-bad { color: var(--red); background: #fff0f0; }
+    .status-wait { color: #ad7930; background: #fff5df; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 22px; }
+    .card { background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: 17px; }
+    .stat { min-height: 142px; padding: 22px 23px; }
+    .stat-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .stat-label { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .stat-icon { display: grid; place-items: center; width: 33px; height: 33px; border-radius: 10px; background: #f3f1ff; color: var(--purple); }
+    .stat-icon.green { background: var(--green-pale); color: var(--green); }
+    .stat-icon.blue { background: #e9f1ff; color: #5485d4; }
+    .stat-icon.orange { background: #fff2e8; color: #e3a064; }
+    .stat-icon svg { width: 17px; height: 17px; }
+    .stat-value { display: block; margin-top: 21px; font-size: 25px; line-height: 1; font-weight: 800; letter-spacing: -.04em; }
+    .stat-note { display: block; margin-top: 8px; color: #a1aabd; font-size: 10px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 20px; margin-top: 24px; align-items: start; }
+    .panel { padding: 26px; }
+    .panel-heading { display: flex; justify-content: space-between; align-items: start; gap: 14px; margin-bottom: 24px; }
+    .panel-heading p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .tag { color: var(--purple); background: var(--purple-pale); border-radius: 7px; padding: 5px 8px; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+    .field { margin-bottom: 17px; }
+    label { display: block; font-size: 12px; font-weight: 750; margin-bottom: 7px; }
+    .field-help { float: right; color: #9da8b9; font-weight: 500; }
+    input, textarea { width: 100%; border: 1px solid #dfe4ee; border-radius: 10px; outline: none; color: var(--ink); background: #fff; transition: border-color .15s, box-shadow .15s; }
+    input { height: 42px; padding: 0 13px; }
+    textarea { display: block; min-height: 126px; resize: vertical; padding: 12px 13px; }
+    input:focus, textarea:focus { border-color: #8b80f1; box-shadow: 0 0 0 3px rgba(103,88,232,.11); }
+    input::placeholder, textarea::placeholder { color: #abb4c4; }
+    .two-fields { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; }
+    .input-wrap { position: relative; }
+    .input-wrap input { padding-right: 66px; }
+    .reveal { position: absolute; top: 1px; right: 3px; height: 40px; padding: 0 12px; border: 0; background: transparent; color: var(--purple); font-size: 11px; font-weight: 800; }
+    .form-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 19px; }
+    .privacy { margin: 0; color: #8b96a9; font-size: 11px; max-width: 300px; }
+    .primary { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 122px; height: 43px; padding: 0 17px; border: 0; border-radius: 10px; color: #fff; background: var(--purple); font-size: 12px; font-weight: 800; box-shadow: 0 8px 17px rgba(103,88,232,.22); }
+    .primary:hover { background: #5547d9; }
+    .primary:disabled { opacity: .55; cursor: wait; }
+    .primary svg { width: 15px; height: 15px; }
+    .notice { margin: 16px 0 0; padding: 11px 13px; border-radius: 9px; color: #9d4c51; background: #fff0f0; font-size: 12px; display: none; }
+    .notice.show { display: block; }
+    .answer { display: none; margin-top: 23px; padding-top: 22px; border-top: 1px solid var(--border); }
+    .answer.show { display: block; }
+    .answer-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .answer h3 { margin: 0; font-size: 14px; }
+    .answer p { white-space: pre-wrap; margin: 0; color: #485674; font-size: 13px; line-height: 1.7; }
+    .answer-meta { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 15px; color: #8b96a9; font-size: 10px; }
+    .right-column { display: grid; gap: 20px; }
+    .endpoint { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 0; border-bottom: 1px solid #edf0f5; }
+    .endpoint:last-child { border-bottom: 0; padding-bottom: 0; }
+    .endpoint:first-of-type { padding-top: 0; }
+    .endpoint strong { display: block; font: 700 12px/1.4 Consolas, monospace; }
+    .endpoint small { display: block; margin-top: 3px; color: #9aa5b9; font-size: 10px; }
+    .endpoint .pill { padding: 5px 8px; font-size: 10px; }
+    .activity-empty { padding: 24px 8px 8px; text-align: center; color: #a1aabd; font-size: 12px; }
+    .activity-empty .empty-icon { width: 40px; height: 40px; display: grid; place-items: center; margin: 0 auto 9px; border-radius: 12px; background: #f3f4fa; color: #9fa6ba; }
+    .activity-row { display: flex; justify-content: space-between; gap: 10px; padding: 11px 0; border-bottom: 1px solid #edf0f5; font-size: 11px; }
+    .activity-row:last-child { border: 0; }
+    .activity-row span:last-child { color: #9aa5b9; white-space: nowrap; }
+    .activity-row strong { display: block; font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
+    .footer { margin-top: 25px; color: #a1aabd; font-size: 11px; display: flex; justify-content: space-between; gap: 10px; }
+    .footer a { color: #7568d8; font-weight: 700; }
+    @media (max-width: 1100px) { .shell { grid-template-columns: 72px minmax(0,1fr); } .sidebar { align-items: center; padding: 27px 8px; } .brand { padding: 0; } .brand-name, .nav-label, .nav span, .sidebar-bottom { display: none; } .nav a { justify-content: center; width: 46px; height: 44px; padding: 0; } .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 760px) { .shell { display: block; } .sidebar { flex-direction: row; justify-content: space-between; align-items: center; padding: 13px 20px; border-right: 0; border-bottom: 1px solid var(--border); } .brand-name { display: inline; } .nav { display: flex; gap: 5px; } .nav a { width: 38px; height: 38px; } main { padding: 24px 17px 34px; } .date { display: none; } .hero { min-height: 190px; padding: 27px; } .hero-side { display: none; } .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 480px) { .stats { gap: 10px; } .stat { min-height: 125px; padding: 17px; } .stat-value { font-size: 21px; margin-top: 17px; } .two-fields { grid-template-columns: 1fr; gap: 0; } .form-foot { align-items: stretch; flex-direction: column; } .primary { width: 100%; } .panel { padding: 21px; } .footer { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Điều hướng">
+      <a class="brand" href="/" aria-label="Day 12 Agent, trang tổng quan"><span class="brand-mark">✦</span><span class="brand-name">Day 12 Agent</span></a>
+      <div class="nav">
+        <div class="nav-label">Workspace</div>
+        <a class="active" href="/" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Tổng quan</span></a>
+        <a href="#ask-panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H5l-3 2v-7.5A8.5 8.5 0 1 1 21 11.5Z"/></svg><span>Thử đặt câu hỏi</span></a>
+        <a href="/docs" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 5.5V22M8 7h8M8 11h7"/></svg><span>API docs ↗</span></a>
+      </div>
+      <div class="sidebar-bottom"><strong>Production API</strong><p>Giao diện này hiển thị trạng thái trực tiếp từ các endpoint của service.</p></div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><p class="eyebrow">Service dashboard</p><h1>Tổng quan dịch vụ</h1></div>
+        <div class="top-actions"><span class="date" id="today"></span><button class="icon-button" id="refresh" type="button" aria-label="Làm mới trạng thái" title="Làm mới trạng thái"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18.4 7L20 12M4 12l1.6 5A7 7 0 0 0 18.5 15"/></svg></button></div>
+      </header>
+
+      <section class="hero" aria-label="Tình trạng service">
+        <div class="hero-content"><span class="hero-kicker"><span class="dot"></span> CLOUD SERVICE · LIVE</span><h2>Agent của bạn đã sẵn sàng trên cloud.</h2><p>Theo dõi sức khỏe dịch vụ, kết nối Redis và thử API ngay tại một nơi.</p></div>
+        <div class="hero-side"><span class="pill" id="hero-status"><span class="dot"></span>Đang kiểm tra</span><small id="last-check">Chưa có lần kiểm tra</small></div>
+      </section>
+
+      <section class="stats" aria-label="Chỉ số tổng quan">
+        <article class="card stat"><div class="stat-head"><span class="stat-label">Trạng thái API</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13h4l3-7 4 12 2-5h3"/></svg></span></div><strong class="stat-value" id="health-value">—</strong><small class="stat-note" id="version-note">Đang kiểm tra /health</small></article>
+        <article class="card stat"><div class="stat-head"><span class="stat-label">Kết nối Redis</span><span class="stat-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12v7c0 1.7 3.6 3 8 3s8-1.3 8-3v-7"/></svg></span></div><strong class="stat-value" id="ready-value">—</strong><small class="stat-note">Kiểm tra trực tiếp /ready</small></article>
+        <article class="card stat"><div class="stat-head"><span class="stat-label">Lượt hỏi trong tab này</span><span class="stat-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m5 10V5m5 14v-8m5 8V3"/></svg></span></div><strong class="stat-value" id="request-count">0</strong><small class="stat-note">Chỉ tính yêu cầu thành công</small></article>
+        <article class="card stat"><div class="stat-head"><span class="stat-label">Chi phí trong tab này</span><span class="stat-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 6v12m3-9.5a3 3 0 0 0-5.5 1c0 3 5.5 1.5 5.5 5a3 3 0 0 1-5.5 1"/></svg></span></div><strong class="stat-value" id="cost-total">$0.0000</strong><small class="stat-note">Tổng từ các phản hồi /ask</small></article>
+      </section>
+
+      <div class="grid">
+        <section class="card panel" id="ask-panel" aria-labelledby="ask-title">
+          <div class="panel-heading"><div><h2 id="ask-title">Thử đặt câu hỏi</h2><p>Gửi một yêu cầu đến endpoint /ask của service.</p></div><span class="tag">POST /ASK</span></div>
+          <form id="ask-form" autocomplete="off">
+            <div class="two-fields">
+              <div class="field"><label for="api-key">API key <span class="field-help">Bắt buộc</span></label><div class="input-wrap"><input id="api-key" name="api-key" type="password" placeholder="Nhập khóa từ Render" required autocomplete="off" spellcheck="false"><button class="reveal" id="toggle-key" type="button" aria-label="Hiện API key">Hiện</button></div></div>
+              <div class="field"><label for="user-id">User ID</label><input id="user-id" name="user-id" type="text" maxlength="100" autocomplete="off" spellcheck="false"></div>
+            </div>
+            <div class="field"><label for="question">Câu hỏi <span class="field-help"><span id="char-count">0</span>/2000</span></label><textarea id="question" name="question" maxlength="2000" required placeholder="Ví dụ: Docker giúp ích gì khi deploy service?"></textarea></div>
+            <div class="form-foot"><p class="privacy">API key chỉ dùng trong tab này; trang không lưu vào cookie hoặc localStorage.</p><button class="primary" id="send-button" type="submit">Gửi câu hỏi <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m4 12 16-8-5 16-3-7zM12 13l8-9"/></svg></button></div>
+          </form>
+          <p class="notice" id="form-error" role="alert"></p>
+          <section class="answer" id="answer" aria-live="polite"><div class="answer-head"><h3>Phản hồi từ Agent</h3><span class="tag">200 OK</span></div><p id="answer-text"></p><div class="answer-meta"><span id="answer-history"></span><span id="answer-tokens"></span><span id="answer-cost"></span></div></section>
+        </section>
+
+        <div class="right-column">
+          <section class="card panel" aria-labelledby="endpoint-title"><div class="panel-heading"><div><h2 id="endpoint-title">Trạng thái endpoint</h2><p>Cập nhật mỗi 30 giây</p></div></div><div class="endpoint"><div><strong>GET /health</strong><small>Process còn hoạt động</small></div><span class="pill status-wait" id="health-pill"><span class="dot"></span>Đang kiểm tra</span></div><div class="endpoint"><div><strong>GET /ready</strong><small>Redis đã kết nối</small></div><span class="pill status-wait" id="ready-pill"><span class="dot"></span>Đang kiểm tra</span></div><div class="endpoint"><div><strong>POST /ask</strong><small>Bảo vệ bằng X-API-Key</small></div><span class="pill status-good"><span class="dot"></span>Cần khóa</span></div></section>
+          <section class="card panel" aria-labelledby="activity-title"><div class="panel-heading"><div><h2 id="activity-title">Hoạt động gần đây</h2><p>Chỉ hiển thị trong tab hiện tại</p></div></div><div id="activity"><div class="activity-empty"><span class="empty-icon">✦</span>Chưa có câu hỏi nào được gửi.</div></div></section>
+        </div>
+      </div>
+
+      <footer class="footer"><span>Day 12 Agent · Service dashboard</span><span><a href="/docs" target="_blank" rel="noopener noreferrer">Xem API docs ↗</a></span></footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+      const state = { requests: 0, cost: 0, activity: [] };
+      const now = new Date();
+      $('today').textContent = new Intl.DateTimeFormat('vi-VN', { day: 'numeric', month: 'long', year: 'numeric' }).format(now);
+      $('user-id').value = 'dashboard-' + (globalThis.crypto?.randomUUID?.().slice(0, 8) || Date.now().toString(36));
+
+      function setPill(id, good, goodText, badText) {
+        const pill = $(id);
+        pill.className = 'pill ' + (good ? 'status-good' : 'status-bad');
+        pill.lastChild.textContent = good ? goodText : badText;
+      }
+
+      async function getJson(path) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 65000);
+        try {
+          const response = await fetch(path, { cache: 'no-store', signal: controller.signal });
+          return { ok: response.ok, body: await response.json() };
+        } finally { clearTimeout(timer); }
+      }
+
+      async function refreshStatus() {
+        const [health, ready] = await Promise.allSettled([getJson('/health'), getJson('/ready')]);
+        const h = health.status === 'fulfilled' && health.value.ok && health.value.body.status === 'ok';
+        const r = ready.status === 'fulfilled' && ready.value.ok && ready.value.body.status === 'ready';
+        $('health-value').textContent = h ? 'Hoạt động' : 'Gián đoạn';
+        $('ready-value').textContent = r ? 'Đã kết nối' : 'Chưa sẵn sàng';
+        $('version-note').textContent = h ? 'Phiên bản ' + (health.value.body.version || '—') : 'Không gọi được /health';
+        setPill('health-pill', h, '200 OK', 'Không sẵn sàng');
+        setPill('ready-pill', r, '200 OK', 'Không sẵn sàng');
+        const hero = $('hero-status');
+        hero.lastChild.textContent = h && r ? 'Đang hoạt động' : 'Cần kiểm tra';
+        $('last-check').textContent = 'Kiểm tra lúc ' + new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+      }
+
+      function showError(message) {
+        const error = $('form-error');
+        error.textContent = message;
+        error.classList.add('show');
+      }
+
+      function addActivity(question) {
+        state.activity.unshift({ question, time: new Intl.DateTimeFormat('vi-VN', { hour: '2-digit', minute: '2-digit' }).format(new Date()) });
+        state.activity = state.activity.slice(0, 5);
+        const holder = $('activity');
+        holder.replaceChildren();
+        for (const item of state.activity) {
+          const row = document.createElement('div');
+          row.className = 'activity-row';
+          const title = document.createElement('strong');
+          title.textContent = item.question;
+          const time = document.createElement('span');
+          time.textContent = item.time;
+          row.append(title, time);
+          holder.append(row);
+        }
+      }
+
+      $('ask-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        $('form-error').classList.remove('show');
+        const key = $('api-key').value.trim();
+        const question = $('question').value.trim();
+        const userId = $('user-id').value.trim();
+        if (!key) return showError('Hãy nhập API key đã đặt trên Render.');
+        if (!question) return showError('Hãy nhập câu hỏi trước khi gửi.');
+        if (!userId) return showError('Hãy nhập User ID.');
+        const button = $('send-button');
+        button.disabled = true;
+        button.firstChild.textContent = 'Đang gửi… ';
+        try {
+          const response = await fetch('/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-API-Key': key, 'X-User-Id': userId },
+            body: JSON.stringify({ question })
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            const message = response.status === 401 ? 'API key chưa đúng. Hãy kiểm tra khóa trong Render.'
+              : response.status === 429 ? 'Bạn đã vượt giới hạn số lượt gọi. Hãy thử lại sau một phút.'
+              : response.status === 402 ? 'User này đã vượt ngân sách tháng.'
+              : 'Yêu cầu không thành công (' + response.status + '): ' + (data.detail || 'Vui lòng thử lại.');
+            return showError(message);
+          }
+          $('answer-text').textContent = data.answer || '';
+          $('answer-history').textContent = 'Lịch sử: ' + (data.history_length ?? 0) + ' tin nhắn';
+          $('answer-tokens').textContent = 'Tokens: ' + ((data.tokens?.in ?? 0) + (data.tokens?.out ?? 0));
+          $('answer-cost').textContent = 'Chi phí: $' + Number(data.cost_usd || 0).toFixed(6);
+          $('answer').classList.add('show');
+          state.requests += 1;
+          state.cost += Number(data.cost_usd || 0);
+          $('request-count').textContent = String(state.requests);
+          $('cost-total').textContent = '$' + state.cost.toFixed(4);
+          addActivity(question);
+          $('question').value = '';
+          $('char-count').textContent = '0';
+        } catch (error) {
+          showError('Không kết nối được tới service. Hãy kiểm tra trạng thái và thử lại.');
+        } finally {
+          button.disabled = false;
+          button.firstChild.textContent = 'Gửi câu hỏi ';
+        }
+      });
+      $('question').addEventListener('input', () => { $('char-count').textContent = String($('question').value.length); });
+      $('toggle-key').addEventListener('click', () => {
+        const input = $('api-key');
+        const showing = input.type === 'password';
+        input.type = showing ? 'text' : 'password';
+        $('toggle-key').textContent = showing ? 'Ẩn' : 'Hiện';
+        $('toggle-key').setAttribute('aria-label', showing ? 'Ẩn API key' : 'Hiện API key');
+      });
+      $('refresh').addEventListener('click', refreshStatus);
+      refreshStatus();
+      setInterval(refreshStatus, 30000);
+    })();
+  </script>
+</body>
+</html>
