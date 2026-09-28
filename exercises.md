@@ -47,20 +47,22 @@ Build cả hai phiên bản và ghi lại số đo thật:
 ```bash
 docker build -f Dockerfile.single-stage -t agent:single .
 docker build -t agent:multi .
-docker images | grep agent
+docker images agent:single
+docker images agent:multi
 ```
 
 | Bản | Dung lượng |
 |-----|-----------|
-| 1 stage (bản đầu) | Chưa đo; cần chạy lệnh build ở trên |
-| Multi-stage | 271 MB (số đo đã ghi nhận trước đó) |
+| 1 stage (bản đầu) | 1.73 GB |
+| Multi-stage | 271 MB |
 
 Giải thích: phần dung lượng chênh lệch đó là những gì?
 
-> Bản một stage dùng `python:3.11` đầy đủ và cài dependency ngay trong image
-> chạy ứng dụng. Bản multi-stage dùng `python:3.11-slim`, chỉ mang thư viện đã
-> cài từ builder sang runtime nên bỏ được các thành phần chỉ phục vụ build.
-> Tôi sẽ điền số đo và chênh lệch cụ thể sau khi build bản một stage.
+> Tôi build hai image trên máy bằng `Dockerfile.single-stage` và `Dockerfile`:
+> Docker báo 1.73 GB và 271 MB, chênh khoảng 1.46 GB. Bản một stage dùng
+> `python:3.11` đầy đủ, cài dependency ngay trong image chạy ứng dụng và còn
+> cache của pip. Bản multi-stage dùng `python:3.11-slim`, cài thư viện với
+> `--no-cache-dir` ở builder và chỉ copy phần đã cài sang runtime.
 
 ---
 
@@ -70,12 +72,12 @@ Sửa một ký tự trong `app/main.py` rồi build lại. Với Dockerfile c�
 layer nào được dùng lại từ cache, layer nào phải chạy lại? Nếu bạn đặt
 `COPY . .` lên trước `RUN pip install` thì kết quả khác thế nào?
 
-> Theo thứ tự hiện tại, khi chỉ sửa `app/main.py`, các layer base image,
-> `COPY requirements.txt` và `RUN pip install` có thể dùng lại từ cache.
-> Layer `COPY app` và các layer sau nó phải xét hoặc chạy lại vì nội dung code
-> đã đổi. Nếu đặt `COPY . .` trước `RUN pip install`, thay đổi trong code làm
-> mất cache của layer `COPY` và khiến bước cài thư viện chạy lại. Đây là kết
-> quả suy ra từ Dockerfile; tôi cần đối chiếu với output build lại thực tế.
+> Tôi thêm một dấu chấm trong comment ở `app/main.py`, rồi build lại với
+> `--progress=plain`. Output ghi `CACHED` cho `COPY requirements.txt`,
+> `RUN pip install` và `COPY --from=builder`; `COPY app`, `COPY utils` và
+> `RUN useradd` hiện `DONE` nên được thực hiện lại. Sau đó tôi đã bỏ dấu chấm
+> để giữ nguyên mã nguồn. Nếu `COPY . .` đứng trước `RUN pip install`, thay
+> đổi ở `app/main.py` cũng làm bước cài thư viện mất cache.
 
 ---
 
@@ -142,12 +144,11 @@ Chạy `docker compose up --scale agent=3` rồi gọi `/ask` nhiều lần vớ
 `X-User-Id`. Quan sát `history_length` trong response. Nếu lịch sử được lưu
 trong một dict Python thay vì Redis, bạn sẽ thấy con số đó thay đổi thế nào?
 
-> Chưa ghi lại dãy `history_length` sau khi scale 3 agent. Với cùng một
-> `X-User-Id`, nếu các request đều thành công và dùng chung Redis, lịch sử
-> trước mỗi request sẽ tăng 2 tin nhắn: dự kiến 0, 2, 4, 6, 8. Nếu dùng dict
-> Python riêng cho từng container, request được gửi sang container khác có
-> thể thấy lịch sử ngắn hơn hoặc quay về 0. Tôi cần điền dãy số quan sát thật
-> sau khi gọi qua các instance.
+> Khi 3 agent đang chạy sau Nginx, tôi gọi `/ask` năm lần với cùng một
+> `X-User-Id` mới. Cả năm lần đều trả 200 và `history_length` lần lượt là
+> 0, 2, 4, 6, 8. Redis lưu chung nên mỗi lần đều thấy hai tin nhắn của lượt
+> trước. Nếu mỗi container dùng một dict Python riêng, request chuyển sang
+> container khác có thể thấy số nhỏ hơn hoặc quay về 0.
 
 ---
 
