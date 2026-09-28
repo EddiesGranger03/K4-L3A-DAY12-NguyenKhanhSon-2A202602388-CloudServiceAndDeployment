@@ -1,7 +1,7 @@
 # Thông tin deploy — Checkpoint 5
 
-> Đang chuẩn bị deploy trên Render. Cập nhật URL, kết quả và ảnh chụp sau khi
-> service chạy thật. Chỉ ghi **tên** biến môi trường; không ghi API key hay
+> Đã deploy trên Render và kiểm tra các endpoint công khai. Chỉ ghi **tên**
+> biến môi trường; không ghi API key hay
 > Redis URL chứa mật khẩu vào repository.
 
 ## Thông tin học viên
@@ -16,12 +16,12 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | Chờ Render cấp sau khi deploy |
+| Public URL | https://day12-agent-mpaz.onrender.com |
 | Platform | Render |
-| Ngày deploy | Chờ deploy thành công |
-| Trạng thái | Chưa xác nhận deploy thành công |
+| Ngày kiểm tra | 28/09/2026 |
+| Trạng thái | `/health` 200, `/ready` 200, `/ask` không có key 401 |
 
-## Cấu hình dự kiến trên Render
+## Cấu hình trên Render
 
 Blueprint [`render.yaml`](render.yaml) tạo web service và Render Key Value.
 Khi tạo Blueprint, Render yêu cầu nhập `AGENT_API_KEY` vì biến này có
@@ -31,20 +31,20 @@ Khi tạo Blueprint, Render yêu cầu nhập `AGENT_API_KEY` vì biến này c�
 
 | Biến | Nguồn giá trị | Trạng thái |
 |------|---------------|------------|
-| `PORT` | Render cấp cho web service | Chờ deploy |
-| `AGENT_API_KEY` | Nhập trong dashboard lúc tạo Blueprint | Chờ nhập |
-| `REDIS_URL` | Kết nối nội bộ từ Render Key Value | Chờ deploy |
-| `RATE_LIMIT_PER_MINUTE` | Blueprint: 10 | Chờ deploy |
-| `MONTHLY_BUDGET_USD` | Blueprint: 10.0 | Chờ deploy |
-| `LOG_LEVEL` | Blueprint: INFO | Chờ deploy |
+| `PORT` | Render cấp cho web service | Service đã nhận request |
+| `AGENT_API_KEY` | Nhập trong dashboard lúc tạo Blueprint | `/ask` từ chối request thiếu key |
+| `REDIS_URL` | Kết nối nội bộ từ Render Key Value | `/ready` báo `redis: true` |
+| `RATE_LIMIT_PER_MINUTE` | Blueprint: 10 | Đã khai báo trong Blueprint |
+| `MONTHLY_BUDGET_USD` | Blueprint: 10.0 | Đã khai báo trong Blueprint |
+| `LOG_LEVEL` | Blueprint: INFO | Đã khai báo trong Blueprint |
 
 ## Kiểm tra sau khi deploy (PowerShell)
 
-Điền URL thật vào `$serviceUrl` và chạy từ PowerShell. Chỉ đặt khóa ở biến
+Chạy từ PowerShell. Chỉ đặt khóa ở biến
 PowerShell trên máy cá nhân; không thêm khóa vào tài liệu này.
 
 ```powershell
-$serviceUrl = "https://TEN-SERVICE.onrender.com"
+$serviceUrl = "https://day12-agent-mpaz.onrender.com"
 curl.exe -i "$serviceUrl/health"
 curl.exe -i "$serviceUrl/ready"
 curl.exe -i -X POST "$serviceUrl/ask" -H "Content-Type: application/json" -d '{"question":"Hello"}'
@@ -58,8 +58,19 @@ có xác thực, điền khóa trong biến môi trường cục bộ `DEPLOY_AP
 
 ## Kết quả chạy thật
 
-Chưa có URL và output của bản deploy. Điền trạng thái HTTP và nội dung phản
-hồi thật sau khi kiểm tra ba endpoint trên.
+Đã gọi trực tiếp Public URL ngày 28/09/2026:
+
+```text
+GET  /       → HTTP 404 {"detail":"Not Found"}
+GET  /health → HTTP 200 {"status":"ok","service":"day12-agent","version":"1.0.0"}
+GET  /ready  → HTTP 200 {"status":"ready","redis":true}
+POST /ask    → HTTP 401 {"detail":"invalid or missing API key"}
+```
+
+Lệnh POST gửi JSON `{"question":"Hello"}` và không gửi `X-API-Key`.
+Route `/` chưa được định nghĩa, nên HTTP 404 ở URL gốc là đúng với code hiện tại.
+Request có xác thực chưa kiểm tra vì `DEPLOY_API_KEY` trên máy đang để trống;
+đây là phần kiểm tra bổ sung của CP5.
 
 ## Ảnh chụp màn hình
 

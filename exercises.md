@@ -158,6 +158,9 @@ Ghi lại **một** lỗi bạn gặp khi deploy lên cloud (build fail, health 
 timeout, sai REDIS_URL, app không đọc `$PORT`...): thông báo lỗi là gì, bạn
 tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
 
-> Chưa deploy lên Render nên chưa có lỗi cloud thật để ghi. Sau lần deploy
-> đầu, tôi sẽ bổ sung thông báo lỗi, cách tìm nguyên nhân trong log và bước
-> sửa dựa trên sự cố thực tế đã gặp.
+> Khi tôi mở URL gốc của bản deploy trên Render, trang trả HTTP 404 với
+> `{"detail":"Not Found"}`. Tôi kiểm tra lại các route trong `app/main.py` và
+> gọi `/health`: endpoint này trả HTTP 200, còn `/ready` trả HTTP 200 với
+> `redis: true`. Nguyên nhân là app chưa định nghĩa route `/`; đây là lỗi chọn
+> đường dẫn khi kiểm tra, không phải lỗi build hay kết nối Redis. Tôi sửa
+> bằng cách kiểm tra đúng URL `/health` và `/ready` thay vì chỉ mở URL gốc.
