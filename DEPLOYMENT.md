@@ -1,101 +1,67 @@
-# Thông Tin Deploy — Checkpoint 5
+# Thông tin deploy — Checkpoint 5
 
-> Điền file này sau khi deploy xong. `pytest tests/test_cp5.py` đọc file này
-> để tìm địa chỉ service của bạn và gọi thử.
->
-> **Chỉ ghi TÊN biến môi trường, tuyệt đối không dán giá trị API key vào đây.**
-> Repo này công khai — dán khóa vào là mất khóa.
+> Đang chuẩn bị deploy trên Render. Cập nhật URL, kết quả và ảnh chụp sau khi
+> service chạy thật. Chỉ ghi **tên** biến môi trường; không ghi API key hay
+> Redis URL chứa mật khẩu vào repository.
 
-## Thông Tin Học Viên
+## Thông tin học viên
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-L3A-DAY12-HoVaTen-MSSV-CloudServicesAndDeployment) |
+| Họ và tên | Nguyễn Khánh Sơn |
+| Mã học viên | 2A202602388 |
+| Repo hiện tại | [GitHub](https://github.com/EddiesGranger03/K4-L3A-DAY12-NguyenKhanhSon-2A202602388-Cloud-Service-And-Deployment) |
 
 ## Service
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | Chờ Render cấp sau khi deploy |
+| Platform | Render |
+| Ngày deploy | Chờ deploy thành công |
+| Trạng thái | Chưa xác nhận deploy thành công |
 
-## Biến Môi Trường Đã Set Trên Cloud
+## Cấu hình dự kiến trên Render
 
-Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
+Blueprint [`render.yaml`](render.yaml) tạo web service và Render Key Value.
+Khi tạo Blueprint, Render yêu cầu nhập `AGENT_API_KEY` vì biến này có
+`sync: false`. Hãy tạo **khóa mới**, lưu trong dashboard và không gửi qua chat.
+`REDIS_URL` được Blueprint nối tự động từ Render Key Value qua
+`connectionString`; không cần dùng Upstash cho phương án này.
 
-| Biến | Đã set | Ghi chú |
-|------|--------|---------|
-| `PORT` | ✅ | platform tự gán |
-| `AGENT_API_KEY` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
-| `RATE_LIMIT_PER_MINUTE` | ✅ | 10 |
-| `MONTHLY_BUDGET_USD` | ✅ | 10.0 |
-| `LOG_LEVEL` | ✅ | INFO |
+| Biến | Nguồn giá trị | Trạng thái |
+|------|---------------|------------|
+| `PORT` | Render cấp cho web service | Chờ deploy |
+| `AGENT_API_KEY` | Nhập trong dashboard lúc tạo Blueprint | Chờ nhập |
+| `REDIS_URL` | Kết nối nội bộ từ Render Key Value | Chờ deploy |
+| `RATE_LIMIT_PER_MINUTE` | Blueprint: 10 | Chờ deploy |
+| `MONTHLY_BUDGET_USD` | Blueprint: 10.0 | Chờ deploy |
+| `LOG_LEVEL` | Blueprint: INFO | Chờ deploy |
 
-## Lệnh Kiểm Tra
+## Kiểm tra sau khi deploy (PowerShell)
 
-Thay `<URL>` bằng Public URL ở trên:
+Điền URL thật vào `$serviceUrl` và chạy từ PowerShell. Chỉ đặt khóa ở biến
+PowerShell trên máy cá nhân; không thêm khóa vào tài liệu này.
 
-```bash
-# 1. Liveness — mong đợi 200 {"status":"ok"}
-curl -i <URL>/health
-
-# 2. Readiness — mong đợi 200 {"status":"ready"} (đã nối được Redis)
-curl -i <URL>/ready
-
-# 3. Không có API key — mong đợi 401
-curl -i -X POST <URL>/ask \
-  -H "Content-Type: application/json" \
-  -d '{"question":"Hello"}'
-
-# 4. Có API key — mong đợi 200 kèm câu trả lời
-curl -i -X POST <URL>/ask \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: $AGENT_API_KEY" \
-  -H "X-User-Id: sv-test" \
-  -d '{"question":"Deploy là gì?"}'
-
-# 5. Rate limit — gọi 15 lần, những lần cuối phải trả 429
-for i in $(seq 1 15); do
-  curl -s -o /dev/null -w "%{http_code} " -X POST <URL>/ask \
-    -H "Content-Type: application/json" \
-    -H "X-API-Key: $AGENT_API_KEY" \
-    -H "X-User-Id: sv-test" \
-    -d '{"question":"test"}'
-done; echo
+```powershell
+$serviceUrl = "https://TEN-SERVICE.onrender.com"
+curl.exe -i "$serviceUrl/health"
+curl.exe -i "$serviceUrl/ready"
+curl.exe -i -X POST "$serviceUrl/ask" -H "Content-Type: application/json" -d '{"question":"Hello"}'
 ```
 
-## Kết Quả Chạy Thật
+Kết quả mong đợi lần lượt là HTTP 200 với `status=ok`, HTTP 200 với
+`status=ready`, và HTTP 401 khi `/ask` không có API key. Để kiểm tra request
+có xác thực, điền khóa trong biến môi trường cục bộ `DEPLOY_API_KEY` rồi chạy
+`pytest tests/test_cp5.py -v`; test này là phần bổ sung và tự bỏ qua nếu
+`DEPLOY_API_KEY` để trống.
 
-Dán output của các lệnh trên vào đây:
+## Kết quả chạy thật
 
-```
-(điền output)
-```
+Chưa có URL và output của bản deploy. Điền trạng thái HTTP và nội dung phản
+hồi thật sau khi kiểm tra ba endpoint trên.
 
-## Ảnh Chụp Màn Hình
+## Ảnh chụp màn hình
 
-Đặt ảnh trong thư mục `screenshots/`:
-
-- `screenshots/dashboard.png` — trang quản lý service trên platform
-- `screenshots/health.png` — kết quả gọi `/health` từ trình duyệt hoặc curl
-
----
-
-## Nếu Dùng Phương Án Dự Phòng
-
-Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng CP5 tối đa 60% điểm:
-
-1. Đặt `LOCAL_FALLBACK=true` trong `.env`
-2. Chạy `docker compose up -d` rồi kiểm tra `docker compose ps`
-3. Chụp màn hình vào `screenshots/`
-4. Chạy `pytest tests/test_cp5.py -v` — bộ test sẽ tự chuyển sang kiểm tra
-   `http://localhost:8000`
-5. Ghi rõ lý do không deploy được vào phần dưới đây:
-
-```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
-```
+Lưu ảnh dashboard Render và kết quả gọi `/health` vào `screenshots/`, sau đó
+ghi tên file tại đây. Che mọi giá trị API key và mật khẩu Redis trước khi chụp.
